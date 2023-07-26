@@ -247,11 +247,11 @@ if __name__ == '__main__':
     import argparse
 
     parser = argparse.ArgumentParser(description='Runs BART interactively.')
-    parser.add_argument('--dataset', default='fomc', choices=['fomc', 'us-russia'], help='Dataset name')
-    parser.add_argument('--data_dir', default='data_fomc_bart', help='Path to preprocessed data dir')
-    parser.add_argument('--text_dir', default='data_fomc_txt', help='Path to extracted text files')
-    parser.add_argument('--model_dir', default='model_fomc', help='Path to finetuned model dir')
-    parser.add_argument('--filter_model', default='filterbert', choices=['filterbert', 'oracle'],
+    parser.add_argument('--dataset', default='us-russia', choices=['fomc', 'us-russia'], help='Dataset name')
+    parser.add_argument('--data_dir', default='data_us_russia_bart', help='Path to preprocessed data dir')
+    parser.add_argument('--text_dir', default='data_us_russia_txt', help='Path to extracted text files')
+    parser.add_argument('--model_dir', default='model_us_russia', help='Path to finetuned model dir')
+    parser.add_argument('--filter_model', default='oracle', choices=['filterbert', 'oracle'],
                         help='Filtering model')
     parser.add_argument('--top_n', type=int, default=10, help='Top n next word probabilities to show')
     parser.add_argument('--seed', type=int, default=1, help='Random seed')
