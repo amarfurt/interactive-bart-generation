@@ -29,6 +29,7 @@ class SummarizationDataModule(LightningDataModule):
     def __init__(self, args):
         super().__init__()
         self.data_dir = args.data_dir
+        self.dataset = args.dataset
         self.data_model = 'bart' if args.model == 'bart' else 'bert'
         self.filter_model = args.filter_model
         self.num_workers = args.num_workers
@@ -84,6 +85,7 @@ class SummarizationDataModule(LightningDataModule):
     def train_dataloader(self):
         dataset = SummarizationDataset(
             data_dir=self.data_dir,
+            dataset=self.dataset,
             filter_model=self.filter_model,
             split='train',
         )
@@ -100,6 +102,7 @@ class SummarizationDataModule(LightningDataModule):
     def val_dataloader(self):
         dataset = SummarizationDataset(
             data_dir=self.data_dir,
+            dataset=self.dataset,
             filter_model=self.filter_model,
             split='valid',
         )
@@ -115,6 +118,7 @@ class SummarizationDataModule(LightningDataModule):
     def test_dataloader(self):
         dataset = SummarizationDataset(
             data_dir=self.data_dir,
+            dataset=self.dataset,
             filter_model=self.filter_model,
             split='test',
         )
@@ -235,8 +239,8 @@ class BartBatch:
 
 class SummarizationDataset(Dataset):
 
-    def __init__(self, data_dir, filter_model, split='train'):
-        data_files = sorted(glob.glob(os.path.join(data_dir, f'fomc.{filter_model}.{split}.pt')))
+    def __init__(self, data_dir, dataset, filter_model, split='train'):
+        data_files = sorted(glob.glob(os.path.join(data_dir, f'{dataset}.{filter_model}.{split}.pt')))
         self.data = []
         for pt in data_files:
             self.data.extend(torch.load(pt))
