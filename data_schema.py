@@ -123,13 +123,13 @@ class USRussiaSchema(AnnotationSchema):
         self.mapping['standardized sentence']['entity_id'] = 'e_1'
         self.mapping['standardized sentence']['label_id'] = 'f_17'
         self.mapping['attribution']['entity_id'] = 'e_2'
-        self.mapping['attribution']['label_id'] = None
+        self.mapping['attribution']['label_id'] = 'f_16'
         self.mapping['actor']['entity_id'] = 'e_3'
         self.mapping['actor']['label_id'] = 'f_11'
         self.mapping['motive']['entity_id'] = 'e_6'
         self.mapping['motive']['label_id'] = 'f_14'
         self.mapping['scope']['entity_id'] = 'e_8'
-        self.mapping['scope']['label_id'] = None
+        self.mapping['scope']['label_id'] = 'f_12'
         self.mapping['evidence']['entity_id'] = 'e_9'
         self.mapping['evidence']['label_id'] = 'f_15'
         self.mapping['reference']['entity_id'] = 'e_4'
@@ -145,7 +145,7 @@ class USRussiaSchema(AnnotationSchema):
             'subtoken_end': '[unused27]',
         }
         self.false_id = 'e_5'
-        self.duplicate_id = None
+        self.duplicate_id = 'e_21'
 
 
 class SchemaFactory:
