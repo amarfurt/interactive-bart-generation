@@ -94,7 +94,7 @@ def load_model(args):
     return model
 
 
-def get_refdoc():
+def get_refdoc(text_dir):
     """ Returns the refdoc's ID and dataset split, if found. """
     refdoc_id = None
     while not refdoc_id:
@@ -106,13 +106,14 @@ def get_refdoc():
 
     # find dataset split
     for split in ['train', 'valid', 'test']:
-        assert os.path.exists(os.path.join('data_fomc_txt', f'{split}.txt')), f"Did not find file with {split} ids"
-        with open(os.path.join('data_fomc_txt', f'{split}.txt'), 'r') as f:
+        assert os.path.exists(os.path.join(text_dir, f'{split}.txt')), f"Did not find file with {split} ids"
+        with open(os.path.join(text_dir, f'{split}.txt'), 'r') as f:
             split_ids = set(map(str.strip, f.readlines()))
         if refdoc_id in split_ids:
             return refdoc_id, split
     print('Refdoc is not in list of known ids. Cannot handle unknown files for now (did you add it?).')
-    return get_refdoc()
+    return get_refdoc(text_dir)
+
 
 
 def next_word_probabilities(args, model, refdoc_id, split, prompt, top_n=10):
@@ -179,16 +180,11 @@ def generate_full(args, model, refdoc_id, split):
 
 
 def main(args):
-    # checks for directory structure
-    assert os.path.exists('data_fomc_txt'), "Expected the directory data_fomc_txt in the current directory"
-    assert os.path.exists('data_fomc_bart'), "Expected the directory data_fomc_bart in the current directory"
-
     seed_everything(args.seed)
     print('Loading BART model...')
     model = load_model(args)
     args.batch_size = 1
-    args.data_dir = 'data_fomc_bart'
-    refdoc_id, split = get_refdoc()
+    refdoc_id, split = get_refdoc(args.text_dir)
 
     # mode: change [r]efdoc, [c]ompletion, [n]ext word, [f]ull generation, [e]xit
     while True:
@@ -197,7 +193,7 @@ def main(args):
             mode = input('Select an operation mode. Change [r]efdoc, generate a [f]ull interpretation,'
                          '[c]omplete a prefix, give [n]ext word probabilities, [e]xit: ')
         if mode == 'r':
-            refdoc_id, split = get_refdoc()
+            refdoc_id, split = get_refdoc(args.text_dir)
         elif mode == 'f':
             generate_full(args, model, refdoc_id, split)
         elif mode == 'c':
@@ -215,7 +211,9 @@ if __name__ == '__main__':
 
     parser = argparse.ArgumentParser(description='Runs BART interactively.')
     parser.add_argument('--dataset', default='fomc', choices=['fomc', 'us-russia'], help='Dataset name')
-    parser.add_argument('--model_dir', default='bart', help='Path to finetuned model dir')
+    parser.add_argument('--data_dir', default='data_fomc_bart', help='Path to preprocessed data dir')
+    parser.add_argument('--text_dir', default='data_fomc_txt', help='Path to extracted text files')
+    parser.add_argument('--model_dir', default='model_fomc', help='Path to finetuned model dir')
     parser.add_argument('--filter_model', default='filterbert', choices=['filterbert', 'oracle'],
                         help='Filtering model')
     parser.add_argument('--top_n', type=int, default=10, help='Top n next word probabilities to show')
