@@ -51,7 +51,7 @@ class BartSummarizer(LightningModule):
         text = self.tokenizer.decode(output_ids, spaces_between_special_tokens=False)
         stst_start = self.annotation_schema.mapping['standardized sentence']['text_start']
         stst_end = self.annotation_schema.mapping['standardized sentence']['text_end']
-        text = text.replace(f'{stst_end} {stst_start}', f'{stst_end}<sent>{stst_start}')
+        # text = text.replace(f'{stst_end} {stst_start}', f'{stst_end}<sent>{stst_start}')
         text = text.replace(self.tokenizer.bos_token, '')
         text = text.replace(self.tokenizer.eos_token, '')
         text = ' '.join(text.split())
