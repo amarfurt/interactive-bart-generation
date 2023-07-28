@@ -198,9 +198,11 @@ def main(args):
             generate_full(args, model, refdoc_id, split)
         elif mode == 'c':
             prompt = input('Enter a prompt: ')
+            prompt = prompt.lstrip()
             complete(args, model, refdoc_id, split, prompt)
         elif mode == 'n':
             prompt = input('Enter a prompt: ')
+            prompt = prompt.lstrip()
             next_word_probabilities(args, model, refdoc_id, split, prompt, top_n=args.top_n)
         elif mode == 'e':
             break
