@@ -191,7 +191,7 @@ def main(args):
         mode = None
         while mode not in ['r', 'f', 'c', 'n', 'e']:
             mode = input('Select an operation mode. Change [r]efdoc, generate a [f]ull interpretation,'
-                         '[c]omplete a prefix, give [n]ext word probabilities, [e]xit: ')
+                         '[c]omplete a prefix, give [n]ext word probabilities, [e]xit: ').lower()
         if mode == 'r':
             refdoc_id, split = get_refdoc(args.text_dir)
         elif mode == 'f':
