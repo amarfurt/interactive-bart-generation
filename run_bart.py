@@ -72,10 +72,8 @@ class BartSummarizer(LightningModule):
         if prefix:
             args['decoder_input_ids'] = self.tokenizer.encode(prefix, return_tensors='pt')[:, :-1]
         beam_output = self.model.generate(**args)
-        source = self.decode(batch.src[0].tolist())
-        reference = self.decode(batch.tgt[0].tolist())
         candidate = self.decode(beam_output[0].tolist())
-        return source, reference, candidate
+        return candidate
 
 
 def load_model(args):
@@ -148,20 +146,31 @@ def next_word_probabilities(args, model, refdoc_id, split, prompt, top_n=10):
 
 
 def generate_completion(args, model, refdoc_id, split, prompt):
+    # find batches/examples (batch size = 1) for the given refdoc
     data_module = SummarizationDataModule(args)
     data_loader = (
         data_module.train_dataloader() if split == 'train'
         else data_module.val_dataloader() if split == 'valid'
         else data_module.test_dataloader()
     )
+    batches_with_refdoc = []
     for batch in data_loader:
-        if batch.refdoc[0] != refdoc_id:
-            continue
-        with torch.no_grad():
-            source, reference, candidate = model.generate_with_prefix(batch, prompt)
-        return source, reference, candidate
-    print(f'Refdoc not found: {refdoc_id}')
-    return None
+        if batch.refdoc[0] == refdoc_id:
+            batches_with_refdoc.append(batch)
+
+    # stop if none found
+    if not batches_with_refdoc:
+        print(f'Refdoc not found: {refdoc_id}')
+        return None
+
+    # decode source and references, and generate candidate
+    source = model.decode(batches_with_refdoc[0].src[0].tolist())
+    references = []
+    for batch in batches_with_refdoc:
+        references.append(model.decode(batch.tgt[0].tolist()))
+    with torch.no_grad():
+        candidate = model.generate_with_prefix(batches_with_refdoc[0], prompt)
+    return source, references, candidate
 
 
 def complete(args, model, refdoc_id, split, prompt):
@@ -175,9 +184,10 @@ def complete(args, model, refdoc_id, split, prompt):
 def generate_full(args, model, refdoc_id, split):
     result = generate_completion(args, model, refdoc_id, split, None)
     if result:
-        source, reference, candidate = result
+        source, references, candidate = result
         print_and_log(f'Source: {source}')
-        print_and_log(f'Reference: {reference}')
+        for i, reference in enumerate(references, 1):
+            print_and_log(f'Reference {i}: {reference}')
         print_and_log(f'Candidate: {candidate}')
 
 
