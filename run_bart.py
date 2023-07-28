@@ -137,7 +137,7 @@ def next_word_probabilities(args, model, refdoc_id, split, prompt, top_n=10):
         print_and_log(f'Top {top_n} next word probabilities:')
         for i, (prob, idx) in enumerate(zip(sorted_probs, indices)):
             token = model.tokenizer.convert_ids_to_tokens([idx])[0]
-            token = token.replace(BART_WHITESPACE_CHAR, '')
+            token = token.replace(BART_WHITESPACE_CHAR, ' ')
             print_and_log(f'{token:20s} - {prob:6.2%}')
             if i + 1 == top_n:
                 break
@@ -231,7 +231,13 @@ def main(args):
             prompt = prompt.lstrip()
             logfile.write(f'Prompt: {prompt}\n')
             logfile.flush()
-            next_word_probabilities(args, model, refdoc_id, split, prompt, top_n=args.top_n)
+            while True:
+                next_word_probabilities(args, model, refdoc_id, split, prompt, top_n=args.top_n)
+                continuation = input("Continue by entering the next token or [l]eave the next word probability mode: ")
+                if continuation.lower() == 'l':
+                    break
+                prompt += continuation
+                print_and_log(f'Prompt: {prompt}')
         elif mode == 'e':
             break
     logfile.close()
