@@ -1,7 +1,9 @@
 """ Script to interactively run BART. """
 
+import datetime
 import glob
 import os
+
 import torch
 import torch.nn.functional as F
 from pytorch_lightning import seed_everything
@@ -134,11 +136,11 @@ def next_word_probabilities(args, model, refdoc_id, split, prompt, top_n=10):
             output = model(batch)
         probs = F.softmax(output.logits[0, -1], dim=-1)
         sorted_probs, indices = probs.sort(descending=True)
-        print(f'Top {top_n} next word probabilities:')
+        print_and_log(f'Top {top_n} next word probabilities:')
         for i, (prob, idx) in enumerate(zip(sorted_probs, indices)):
             token = model.tokenizer.convert_ids_to_tokens([idx])[0]
             token = token.replace(BART_WHITESPACE_CHAR, '')
-            print(f'{token:20s} - {prob:6.2%}')
+            print_and_log(f'{token:20s} - {prob:6.2%}')
             if i + 1 == top_n:
                 break
         return
@@ -167,16 +169,23 @@ def complete(args, model, refdoc_id, split, prompt):
     result = generate_completion(args, model, refdoc_id, split, prompt)
     if result:
         _, _, candidate = result
-        print(f'Completion: {candidate}')
+        print_and_log(f'Completion: {candidate}')
 
 
 def generate_full(args, model, refdoc_id, split):
     result = generate_completion(args, model, refdoc_id, split, None)
     if result:
         source, reference, candidate = result
-        print(f'Source: {source}')
-        print(f'Reference: {reference}')
-        print(f'Candidate: {candidate}')
+        print_and_log(f'Source: {source}')
+        print_and_log(f'Reference: {reference}')
+        print_and_log(f'Candidate: {candidate}')
+
+
+def print_and_log(text):
+    global logfile
+    logfile.write(text.strip() + '\n')
+    logfile.flush()
+    print(text)
 
 
 def main(args):
@@ -184,7 +193,11 @@ def main(args):
     print('Loading BART model...')
     model = load_model(args)
     args.batch_size = 1
+    logname = f'{os.getenv("USER")}-{datetime.datetime.now().strftime("%Y-%m-%dT%H:%M:%S")}.log'
+    global logfile
+    logfile = open(os.path.join('logs', logname), 'w')
     refdoc_id, split = get_refdoc(args.text_dir)
+    print_and_log(f'Using refdoc with id "{refdoc_id}" that appears in the {split} split.')
 
     # mode: change [r]efdoc, [c]ompletion, [n]ext word, [f]ull generation, [e]xit
     while True:
@@ -194,18 +207,24 @@ def main(args):
                          '[c]omplete a prefix, give [n]ext word probabilities, [e]xit: ').lower()
         if mode == 'r':
             refdoc_id, split = get_refdoc(args.text_dir)
+            print_and_log(f'Using refdoc with id "{refdoc_id}" that appears in the {split} split.')
         elif mode == 'f':
             generate_full(args, model, refdoc_id, split)
         elif mode == 'c':
             prompt = input('Enter a prompt: ')
             prompt = prompt.lstrip()
+            logfile.write(f'Prompt: {prompt}\n')
+            logfile.flush()
             complete(args, model, refdoc_id, split, prompt)
         elif mode == 'n':
             prompt = input('Enter a prompt: ')
             prompt = prompt.lstrip()
+            logfile.write(f'Prompt: {prompt}\n')
+            logfile.flush()
             next_word_probabilities(args, model, refdoc_id, split, prompt, top_n=args.top_n)
         elif mode == 'e':
             break
+    logfile.close()
 
 
 if __name__ == '__main__':
